@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import InputElement from "../Elements/InputElement";
 import ToastImgEditor from "../Elements/ToastImgEditor";
@@ -37,6 +37,12 @@ const Home = () => {
       });
   };
 
+  const spinner = (
+    <div className="spinner-border" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  );
+
   return (
     <div>
       <InputElement />
@@ -61,12 +67,14 @@ const Home = () => {
                     dispatch(updateIsLoading(loading));
                   }, 5000);
                 }
+
                 return (
                   <button
+                    style={{ minWidth: "150px" }}
                     className="btn btn-outline-primary "
                     disabled={rawImages.length ? false : true}
                   >
-                    Download PDF
+                    {loading ? spinner : "Download PDF"}
                   </button>
                 );
               }}
@@ -78,11 +86,12 @@ const Home = () => {
               return (
                 <div className="text-center  my-2">
                   <button
+                    style={{ minWidth: "150px" }}
                     className="btn btn-outline-primary "
                     disabled={rawImages.length ? false : true}
                     onClick={() => onUpLoadToServer(blob)}
                   >
-                    Upload to Server
+                    {loading ? spinner : "Upload to Server"}
                   </button>
                 </div>
               );

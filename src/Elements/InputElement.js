@@ -14,6 +14,11 @@ const InputElement = () => {
   const dispatch = useDispatch();
   const pageSelected = useSelector((state) => state.dataReducer.pageSelected);
   const rawImages = useSelector((state) => state.dataReducer.rawImages);
+  const signPosition = useSelector((state) => state.dataReducer.signPosition);
+  const [testImg, setTestImage] = useState(null);
+  const getSignatures = useSelector(
+    (state) => state.signatureReducer.signatures
+  );
 
   const imgStyle = (page) => {
     return {
@@ -56,7 +61,7 @@ const InputElement = () => {
     const files = Array.from(ev.target.files);
     let imgObj = [...rawImages];
 
-    await files.map(async (img) => {
+    files.map(async (img, imgIndex) => {
       const img64 = await readFileData(img);
       const imgUrl = URL.createObjectURL(img);
       const list = {
@@ -69,6 +74,10 @@ const InputElement = () => {
       imgObj.push(list);
 
       setImageUpload((imageUpload) => [...imageUpload, list]);
+
+      if (!pageSelected && imgIndex === 0) {
+        dispatch(updatePageSelected(list));
+      }
     });
 
     dispatch(updateRawImages(imgObj));

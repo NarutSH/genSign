@@ -9,7 +9,7 @@ import Modal from "react-modal";
 import _ from "lodash";
 import { BsPlusCircle } from "react-icons/bs";
 
-const ModalSignaturePad = () => {
+const ModalSignaturePad = ({ setSignatureSelected }) => {
   const signatureRef = useRef();
   const getSignatures = useSelector(
     (state) => state.signatureReducer.signatures
@@ -52,6 +52,7 @@ const ModalSignaturePad = () => {
     const listSignatures = [...getSignatures, obj];
 
     dispatch(updateSignature(listSignatures));
+    setSignatureSelected(obj);
 
     await signatureRef.current.clear();
     closeModal();
