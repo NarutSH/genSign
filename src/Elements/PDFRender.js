@@ -25,15 +25,13 @@ const PDFRender = ({ rawImages }) => {
     },
   });
 
- 
-
   return (
     <Document>
       {rawImages.length
         ? rawImages.map((item) => {
             return (
               <Page
-                size="A4"
+                // size="A4"
                 style={styles.page}
                 wrap
                 key={item.pId}

@@ -33,6 +33,8 @@ const ToastImgEditor = () => {
   const [fullname, setFullname] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [nameSign, setNameSign] = useState("");
+  const [signDms, setSignDms] = useState(null);
+  const [imgMerge, setImgMerge] = useState(null);
   const { register, handleSubmit, getValues, reset, watch } = useForm();
   const watchSignOption = watch("signOption");
   const dispatch = useDispatch();
@@ -53,8 +55,6 @@ const ToastImgEditor = () => {
       alignItems: "center",
     },
   };
-
-  console.log({ getSignatures });
 
   const resizeFile = async (data64, fName) => {
     const file = await dataURLtoFile(data64, fName);
@@ -109,8 +109,6 @@ const ToastImgEditor = () => {
       setSignatureSelected(null);
     }
   };
-  const [signDms, setSignDms] = useState(null);
-  const [imgMerge, setImgMerge] = useState(null);
 
   useEffect(async () => {
     if (signatureSelected) {
@@ -138,19 +136,21 @@ const ToastImgEditor = () => {
         return list;
       });
 
-      const getNameWidth = newArr.find((item) => item.type === "name")?.length;
-      const getDateWidth = newArr.find((item) => item.type === "date")?.length;
+      const getNameWidth =
+        newArr.find((item) => item.type === "name")?.length || 0;
+      const getDateWidth =
+        newArr.find((item) => item.type === "date")?.length || 0;
 
-      const textMaxLength = Math.max(getNameWidth, getDateWidth);
+      const textMaxLength = Math.max(+getNameWidth, +getDateWidth);
 
       optionLength = textMaxLength;
 
       const list = newArr?.map((item, index) => {
         let xText = 0;
 
-        if (item.type === "name" && getNameWidth < getDateWidth) {
+        if (item.type === "name" && +getNameWidth < +getDateWidth) {
           xText = (getDateWidth - getNameWidth) / 2;
-        } else if (item.type === "date" && getDateWidth < getNameWidth) {
+        } else if (item.type === "date" && +getDateWidth < +getNameWidth) {
           xText = (getNameWidth - getDateWidth) / 2;
         }
 
@@ -166,10 +166,18 @@ const ToastImgEditor = () => {
       let xSign = 0;
       let xOption = 0;
 
-      if (160 > optionLength) {
+      console.log({
+        signDms,
+        optionLength,
+        textMaxLength,
+        getNameWidth,
+        getDateWidth,
+      });
+
+      if (160 > +optionLength) {
         xSign = 0;
         xOption = (160 - optionLength) / 2;
-      } else if (160 < optionLength) {
+      } else if (160 < +optionLength) {
         xSign = (optionLength - 160) / 2;
         xOption = 0;
       }
@@ -189,7 +197,7 @@ const ToastImgEditor = () => {
         ],
         {
           height: 200,
-          width: Math.max(optionLength, 100),
+          width: Math.max(optionLength, 160),
         }
       );
 
