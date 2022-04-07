@@ -89,11 +89,18 @@ const ToastImgEditor = () => {
     dispatch(updateIsLoading(true));
     const instance = await imageEditor.current.getInstance();
     await instance.resetZoom();
-    const dataUrl = instance.toDataURL();
+    const dataUrl = await instance.toDataURL();
+    const imgFile = await dataURLtoFile(dataUrl, pageSelected.imgName);
 
     const updatedData = await rawImages.map((item, index) => {
       return item.pId === pageSelected.pId
-        ? { pId: pageSelected.pId, img64: dataUrl, imgDms: item.imgDms }
+        ? {
+            ...item,
+            img64: dataUrl,
+            imgFile,
+            // imgDms: item.imgDms,
+            // pId: pageSelected.pId,
+          }
         : item;
     });
 
@@ -360,8 +367,8 @@ const ToastImgEditor = () => {
                 {displayInputName}
                 {displayInputDate}
               </div>
-              <div className="col d-flex">
-                {/* <div className="shadow" style={styles.sampleSign}>
+              {/* <div className="col d-flex"> */}
+              {/* <div className="shadow" style={styles.sampleSign}>
                   <img
                     src={imgMerge}
                     style={{
@@ -381,7 +388,7 @@ const ToastImgEditor = () => {
                     }}
                   />
                 </div> */}
-              </div>
+              {/* </div> */}
             </div>
 
             <div className="text-end my-2">
@@ -405,8 +412,8 @@ const ToastImgEditor = () => {
               },
               menuBarPosition: "bottom",
             }}
-            cssMaxHeight={900}
-            cssMaxWidth={1200}
+            // cssMaxHeight={900}
+            // cssMaxWidth={1200}
             selectionStyle={{
               cornerSize: 20,
               rotatingPointOffset: 70,

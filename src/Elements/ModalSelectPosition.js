@@ -98,10 +98,6 @@ const ModalSelectPosition = ({ signatureSelected }) => {
     await instance.clearObjects();
 
     await instance.addImageObject(transformSign);
-
-    // const res = await imageEditorPosition.current.imageEditorInst;
-
-    // res.ui.mask.actions.loadImageFromURL(transformSign);
   };
 
   const onSelectPosition = async (_, point) => {
@@ -142,10 +138,14 @@ const ModalSelectPosition = ({ signatureSelected }) => {
         { src: transformSign, x: signPosition.x, y: signPosition.y },
       ]);
 
+      const imgFile = await dataURLtoFile(img64, item.imgName);
+
       const list = {
-        pId: item.pId,
+        ...item,
         img64,
-        imgDms: item.imgDms,
+        imgFile,
+        // imgDms: item.imgDms,
+        // pId: item.pId,
       };
 
       setResultsSign((resultsSign) => [...resultsSign, list]);
@@ -312,8 +312,8 @@ const ModalSelectPosition = ({ signatureSelected }) => {
                       height: "80vh",
                     },
                   }}
-                  cssMaxHeight={900}
-                  cssMaxWidth={1200}
+                  // cssMaxHeight={900}
+                  // cssMaxWidth={1200}
                   selectionStyle={{
                     cornerSize: 20,
                     rotatingPointOffset: 70,

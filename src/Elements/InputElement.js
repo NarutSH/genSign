@@ -9,6 +9,7 @@ import {
 
 import _ from "lodash";
 import uniqid from "uniqid";
+import resizebase64 from "resize-base64";
 
 const InputElement = () => {
   const [imageUpload, setImageUpload] = useState([]);
@@ -71,15 +72,16 @@ const InputElement = () => {
 
     files.map(async (img, imgIndex) => {
       const img64 = await readFileData(img);
-      const imgUrl = URL.createObjectURL(img);
+      // const imgUrl = URL.createObjectURL(img);
       const imgDms = await getDms(img64);
 
       const list = {
         pId: uniqid("img_"),
-        img64,
+        img64: resizebase64(img64, 4096, 4096),
         imgFile: img,
-        imgUrl,
+        // imgUrl,
         imgDms: { width: imgDms.naturalWidth, height: imgDms.naturalHeight },
+        imgName: img.name,
       };
 
       imgObj.push(list);
@@ -93,8 +95,6 @@ const InputElement = () => {
 
     dispatch(updateRawImages(imgObj));
   };
-
-  console.log({ rawImages });
 
   return (
     <div>
@@ -129,9 +129,7 @@ const InputElement = () => {
                 <FaTimesCircle onClick={() => onHandleDeleteImage(page)} />
               </div>
               <img
-                // id={page.pId}
                 src={page.img64}
-                // onLoad={onImgLoad}
                 onClick={() => onHandleClick(page)}
                 alt="ref"
                 style={imgStyle(page)}
