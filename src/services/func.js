@@ -1,14 +1,16 @@
 import { dsmApi } from "../api/dsmApi";
 
-export const onHandlePDFUpload = async (blobFile) => {
-  const file = new File([blobFile], "undefine.pdf", {
-    type: "application/pdf",
+export const onSignTemplateUpload = async (imagesArr, signTemplateArr) => {
+  const formData = new FormData();
+  formData.append("token", "O@OkFXd9obuPxq:-t68s7jxUKMGUw2INW9mxcAzOKpGIEc5Z");
+
+  await imagesArr.forEach((img) => {
+    formData.append("page[]", img.status);
   });
 
-  const formData = new FormData();
-
-  formData.append("token", "O@OkFXd9obuPxq:-t68s7jxUKMGUw2INW9mxcAzOKpGIEc5Z");
-  formData.append("file", file);
+  await signTemplateArr.forEach((img) => {
+    formData.append("file[]", img.signTempFile);
+  });
 
   const res = await dsmApi.post("", formData);
   return res.data;
@@ -66,4 +68,36 @@ export const getImageDimensions = async (base64) => {
     const imgWidth = img.naturalWidth;
     const imgHeight = img.naturalHeight;
   };
+};
+
+export const convertToDataURL = (url) =>
+  fetch(url)
+    .then((response) => response.blob())
+    .then(
+      (blob) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        })
+    );
+
+export const fetchToFile = (url, name) =>
+  fetch(url)
+    .then((response) => response.blob())
+    .then((blob) => {
+      var file = new File([blob], name);
+
+      return file;
+    });
+
+export const random_rgba = () => {
+  var o = Math.round,
+    r = Math.random,
+    s = 250;
+  return (
+    "rgba(" + o(r() * s) + "," + o(r() * s) + "," + o(r() * s) + "," + 1 + ")"
+  );
 };

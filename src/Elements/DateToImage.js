@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { updateDateSign } from "../redux/action/signatureAction";
 
-const DateToImage = ({ name, setDateWidth }) => {
+const DateToImage = ({ name }) => {
   const dispatch = useDispatch();
-  const [genImg, setGenImg] = useState("");
 
   useEffect(() => {
     if (name) {
@@ -19,22 +18,12 @@ const DateToImage = ({ name, setDateWidth }) => {
       canvasTxt.font = "24px sans-serif";
       canvasTxt.imageSmoothingQuality = "high";
 
-      // canvasTxt.textAlign = "center";
-
-      setDateWidth(txtWidth);
-
       canvasTxt.fillText(name, 0, 20);
 
       const imgUrl = canvasTxt.canvas.toDataURL();
 
-      const list = {
-        type: "date",
-        imgUrl,
-      };
-      // setGenImg(imgUrl);
       dispatch(updateDateSign(imgUrl));
     } else {
-      // setGenImg(null);
       dispatch(updateDateSign(null));
     }
   }, [name]);
@@ -42,7 +31,6 @@ const DateToImage = ({ name, setDateWidth }) => {
   return (
     <div style={{ margin: "auto 0 " }}>
       <canvas id="canvasComponent" style={{ display: "none" }} />
-      {/* {genImg ? <img id="imageComponent" src={genImg} /> : null} */}
     </div>
   );
 };

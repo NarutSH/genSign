@@ -4,16 +4,18 @@ import {
   GET_RAW_IMAGES,
   GET_IS_LOADING,
   GET_SIGN_POSITION,
+  GET_SIGN_TEMPLATE_ARRAY,
+  GET_SIGN_TEMPLATE_ID,
 } from "../action/dataAction";
 
 const initState = {
   rawFile: null,
-  pageSelected: "",
+  pageSelected: [],
   rawImages: [],
   isLoading: false,
   signPosition: null,
-  
-  // signPosition: { x: 0, y: 0 },
+  signTemplateId: 0,
+  signTemplateArray: [],
 };
 
 const dataReducer = (state = initState, action) => {
@@ -46,6 +48,17 @@ const dataReducer = (state = initState, action) => {
       return {
         ...state,
         signPosition: action.payload.signPosition,
+      };
+
+    case GET_SIGN_TEMPLATE_ID:
+      return {
+        ...state,
+        signTemplateId: action.payload.signTemplateId,
+      };
+    case GET_SIGN_TEMPLATE_ARRAY:
+      return {
+        ...state,
+        signTemplateArray: action.payload.signTemplateArray,
       };
 
     default:

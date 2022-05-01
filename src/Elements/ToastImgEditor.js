@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ImageEditor from "@toast-ui/react-image-editor";
 import { useSelector, useDispatch } from "react-redux";
 import ModalSignaturePad from "./ModalSignaturePad";
@@ -7,6 +7,8 @@ import {
   updatePageSelected,
   updateIsLoading,
   updateSignPosition,
+  updateSignTemplateId,
+  updateSignTemplateArray,
 } from "../redux/action/dataAction";
 import { deleteSignature } from "../redux/action/signatureAction";
 import { FaTimesCircle } from "react-icons/fa";
@@ -19,15 +21,23 @@ import resizebase64 from "resize-base64";
 import Resizer from "react-image-file-resizer";
 import {
   convertDate,
+  convertToDataURL,
   dataURLtoFile,
+  fetchToFile,
   getImageDimensions,
+  random_rgba,
 } from "../services/func";
 
 const ToastImgEditor = () => {
   const imageEditor = useRef();
+
+  // const instnc = imageEditor?.current?.instance();
+  // console.log({ instnc });
+
   const [groupSign, setGroupSign] = useState(null);
   const [dateWidth, setDateWidth] = useState(0);
   const [nameWidth, setNameWidth] = useState(0);
+  const [blank64, setBlank64] = useState(null);
 
   const [signatureSelected, setSignatureSelected] = useState(null);
   const [fullname, setFullname] = useState("");
@@ -35,6 +45,7 @@ const ToastImgEditor = () => {
   const [nameSign, setNameSign] = useState("");
   const [signDms, setSignDms] = useState(null);
   const [imgMerge, setImgMerge] = useState(null);
+  // const [imgBlank, setImgBlank] = useState("");
   const { register, handleSubmit, getValues, reset, watch } = useForm();
   const watchSignOption = watch("signOption");
   const dispatch = useDispatch();
@@ -44,68 +55,57 @@ const ToastImgEditor = () => {
   const getNameSign = useSelector((state) => state.signatureReducer.nameSign);
   const getDateSign = useSelector((state) => state.signatureReducer.dateSign);
   const pageSelected = useSelector((state) => state.dataReducer.pageSelected);
+  const signTemplateId = useSelector(
+    (state) => state.dataReducer.signTemplateId
+  );
+  const signTemplateArray = useSelector(
+    (state) => state.dataReducer.signTemplateArray
+  );
   const rawImages = useSelector((state) => state.dataReducer.rawImages);
 
-  const styles = {
-    sampleSign: {
-      width: "150px",
-      height: "150px",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  };
-
-  const resizeFile = async (data64, fName) => {
-    const file = await dataURLtoFile(data64, fName);
-    return new Promise((resolve) => {
-      Resizer.imageFileResizer(
-        file,
-        3000,
-        3000,
-        "PNG",
-        100,
-        0,
-        (uri) => {
-          resolve(uri);
-        },
-        "base64",
-        1200,
-        1200
-      );
-    });
-  };
-
-  const onHandleAddSign = async (signature) => {
+  const onHandleAddObject = async (data64) => {
     const instance = await imageEditor.current.getInstance();
     await instance.resetZoom();
 
-    const idenSize = await resizeFile(signature);
-
-    await instance.addImageObject(idenSize);
+    await instance.addImageObject(data64);
   };
 
   const onHandleSaveFile = async () => {
+    let sgnId = +signTemplateId;
+    let bgColor = random_rgba();
     dispatch(updateIsLoading(true));
     const instance = await imageEditor.current.getInstance();
     await instance.resetZoom();
-    const dataUrl = await instance.toDataURL();
-    const imgFile = await dataURLtoFile(dataUrl, pageSelected.imgName);
 
-    const updatedData = await rawImages.map((item, index) => {
-      return item.pId === pageSelected.pId
+    await instance.applyFilter("removeColor", { distance: 10 });
+
+    const dataUrl = await instance.toDataURL();
+    const signTempFile = await dataURLtoFile(
+      dataUrl,
+      `sign_${signTemplateId}.png`
+    );
+
+    const updatedData = await rawImages.map((item) => {
+      return pageSelected.indexOf(item) !== -1
         ? {
             ...item,
-            img64: dataUrl,
-            imgFile,
-            // imgDms: item.imgDms,
-            // pId: pageSelected.pId,
+            status: +sgnId,
+            bgColor,
           }
         : item;
     });
 
+    const listSign = {
+      signTempFile,
+      signTemplateId,
+    };
+
+    const tempSign = [...signTemplateArray, listSign];
+
+    dispatch(updateSignTemplateId((sgnId += 1)));
+    dispatch(updateSignTemplateArray(tempSign));
     dispatch(updateRawImages(updatedData));
-    dispatch(updatePageSelected());
+    dispatch(updatePageSelected([]));
     dispatch(updateIsLoading(false));
   };
 
@@ -126,107 +126,9 @@ const ToastImgEditor = () => {
     }
   }, [signatureSelected]);
 
-  const onHandleSignatureOption = async (ev) => {
-    let containerWidth = 160;
-    let optionLength = 0;
-
-    if (watchSignOption && watchSignOption.length) {
-      const newArr = watchSignOption.map((item) => {
-        const portion = item.split(" ");
-
-        const list = {
-          type: portion[0],
-          img64: portion[1],
-          length: portion[2],
-        };
-
-        return list;
-      });
-
-      const getNameWidth =
-        newArr.find((item) => item.type === "name")?.length || 0;
-      const getDateWidth =
-        newArr.find((item) => item.type === "date")?.length || 0;
-
-      const textMaxLength = Math.max(+getNameWidth, +getDateWidth);
-
-      optionLength = textMaxLength;
-
-      const list = newArr?.map((item, index) => {
-        let xText = 0;
-
-        if (item.type === "name" && +getNameWidth < +getDateWidth) {
-          xText = (getDateWidth - getNameWidth) / 2;
-        } else if (item.type === "date" && +getDateWidth < +getNameWidth) {
-          xText = (getNameWidth - getDateWidth) / 2;
-        }
-
-        return { src: item.img64, x: xText, y: index * 23 };
-      });
-
-      const imgMergedOption = await mergeImages(list, {
-        height: 50,
-      });
-
-      setImgMerge(imgMergedOption);
-
-      let xSign = 0;
-      let xOption = 0;
-
-      console.log({
-        signDms,
-        optionLength,
-        textMaxLength,
-        getNameWidth,
-        getDateWidth,
-      });
-
-      if (160 > +optionLength) {
-        xSign = 0;
-        xOption = (160 - optionLength) / 2;
-      } else if (160 < +optionLength) {
-        xSign = (optionLength - 160) / 2;
-        xOption = 0;
-      }
-
-      const imgMergedSign = await mergeImages(
-        [
-          {
-            src: resizebase64(signatureSelected.data64, 160, 100),
-            x: xSign,
-            y: 0,
-          },
-          {
-            src: imgMergedOption,
-            x: xOption,
-            y: 100,
-          },
-        ],
-        {
-          height: 200,
-          width: Math.max(optionLength, 160),
-        }
-      );
-
-      setGroupSign(imgMergedSign);
-    } else {
-      setGroupSign(signatureSelected.data64);
-    }
-  };
-
   useEffect(() => {
-    onHandleSignatureOption();
-  }, [watchSignOption, signatureSelected]);
-
-  useEffect(async () => {
-    if (imageEditor && imageEditor.current && pageSelected) {
-      const instance = await imageEditor.current.getInstance();
-
-      instance.ui.text.textColor = "#000000";
-      instance.ui.draw.colorPickerInputBox.defaultValue = "#000000";
-
-      instance.loadImageFromURL(pageSelected.img64, pageSelected.pId);
-    }
+    setFullname("");
+    setSelectedDate("");
   }, [pageSelected]);
 
   const displayBtnSign = (
@@ -243,7 +145,6 @@ const ToastImgEditor = () => {
             "Choose Signature"
           ) : (
             <img
-              // onClick={() => onHandleAddSign(signatureSelected)}
               src={signatureSelected?.data64}
               style={{
                 height: "25px",
@@ -269,7 +170,6 @@ const ToastImgEditor = () => {
                         />
                       </div>
                       <img
-                        // onClick={() => onHandleAddSign(item)}
                         onClick={() => setSignatureSelected(item)}
                         src={item.data64}
                         style={{
@@ -288,17 +188,16 @@ const ToastImgEditor = () => {
       </div>
 
       <button
-        disabled={groupSign ? false : true}
+        style={{ minWidth: "100px" }}
+        disabled={signatureSelected ? false : true}
         onClick={(ev) => {
           ev.preventDefault();
-          onHandleAddSign(groupSign);
+          onHandleAddObject(signatureSelected.data64);
         }}
         className="btn btn-primary mx-3 "
       >
         ลงนาม
       </button>
-
-      <ModalSelectPosition signatureSelected={groupSign} />
     </div>
   );
 
@@ -312,18 +211,19 @@ const ToastImgEditor = () => {
         onChange={(ev) => setFullname(ev.target.value)}
       />
 
-      <div className="form-check ms-3">
-        <input
-          disabled={fullname ? false : true}
-          className="form-check-input"
-          type="checkbox"
-          value={`name ${getNameSign} ${nameWidth}`}
-          {...register("signOption")}
-        />
-        <label className="form-check-label">แนบชื่อ</label>
-      </div>
+      <button
+        style={{ minWidth: "100px" }}
+        disabled={getNameSign ? false : true}
+        onClick={(ev) => {
+          ev.preventDefault();
+          onHandleAddObject(getNameSign);
+        }}
+        className="btn btn-primary mx-3 "
+      >
+        ลงชื่อ
+      </button>
 
-      <TextToImage name={fullname} setNameWidth={setNameWidth} />
+      <TextToImage name={fullname} />
     </div>
   );
   const displayInputDate = (
@@ -336,60 +236,36 @@ const ToastImgEditor = () => {
         onChange={(ev) => setSelectedDate(ev.target.value)}
       />
 
-      <div className="form-check ms-3">
-        <input
-          disabled={selectedDate ? false : true}
-          className="form-check-input"
-          type="checkbox"
-          value={`date ${getDateSign} ${dateWidth}`}
-          {...register("signOption")}
-        />
-        <label className="form-check-label">แนบวันที่</label>
-      </div>
+      <button
+        style={{ minWidth: "100px" }}
+        disabled={selectedDate && getDateSign ? false : true}
+        onClick={(ev) => {
+          ev.preventDefault();
+          onHandleAddObject(getDateSign);
+        }}
+        className="btn btn-primary mx-3 "
+      >
+        ลงวันที่
+      </button>
 
-      <DateToImage
-        name={convertDate(selectedDate)}
-        setDateWidth={setDateWidth}
-      />
+      <DateToImage name={convertDate(selectedDate)} />
     </div>
   );
 
   return (
     <div>
-      {pageSelected ? (
+      {pageSelected.length ? (
         <>
-          <form
-          // onInput={handleSubmit(onHandleSignatureOption)}
-          >
+          <form>
             <div className="row">
               <div className="col">
                 {displayBtnSign}
                 {displayInputName}
                 {displayInputDate}
               </div>
-              {/* <div className="col d-flex"> */}
-              {/* <div className="shadow" style={styles.sampleSign}>
-                  <img
-                    src={imgMerge}
-                    style={{
-                      maxHeight: "100%",
-                      maxWidth: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-                <div className="shadow" style={styles.sampleSign}>
-                  <img
-                    src={groupSign}
-                    style={{
-                      maxHeight: "100%",
-                      maxWidth: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div> */}
-              {/* </div> */}
             </div>
+
+            <img src={getNameSign} />
 
             <div className="text-end my-2">
               <div onClick={onHandleSaveFile} className="btn btn-warning mx-2">
@@ -402,8 +278,8 @@ const ToastImgEditor = () => {
             ref={imageEditor}
             includeUI={{
               loadImage: {
-                path: pageSelected.img64,
-                name: pageSelected.pId,
+                path: pageSelected[0].img64,
+                name: "SampleImage",
               },
               initMenu: "",
               uiSize: {
@@ -412,8 +288,8 @@ const ToastImgEditor = () => {
               },
               menuBarPosition: "bottom",
             }}
-            // cssMaxHeight={900}
-            // cssMaxWidth={1200}
+            cssMaxHeight={900}
+            cssMaxWidth={1200}
             selectionStyle={{
               cornerSize: 20,
               rotatingPointOffset: 70,
