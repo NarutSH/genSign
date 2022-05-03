@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTimesCircle } from "react-icons/fa";
+import { GrClearOption } from "react-icons/gr";
 
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -57,9 +57,9 @@ const InputElement = () => {
     }
   };
 
-  const onHandleDeleteImage = async (img) => {
-    const newRawData = await rawImages.filter((list) => {
-      return list.pId !== img.pId;
+  const onClearImageStatus = async (img) => {
+    const newRawData = await rawImages.map((item) => {
+      return item.pId !== img.pId ? item : { ...item, status: -1 };
     });
 
     dispatch(updateRawImages(newRawData));
@@ -163,6 +163,19 @@ const InputElement = () => {
                     style={{ background: page?.bgColor }}
                   >
                     {+page.status + 1}
+                  </span>
+                </div>
+              ) : (
+                ""
+              )}
+              {+page.status !== -1 ? (
+                <div
+                  className="position-absolute bottom-0 end-0 "
+                  style={{ zIndex: "99" }}
+                  onClick={() => onClearImageStatus(page)}
+                >
+                  <span className="badge bg-light m-1">
+                    <GrClearOption size="1.2rem" />
                   </span>
                 </div>
               ) : (
