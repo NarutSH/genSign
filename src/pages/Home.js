@@ -25,6 +25,8 @@ const Home = () => {
   const signTemplateArray = useSelector(
     (state) => state.dataReducer.signTemplateArray
   );
+
+  console.log({ signTemplateArray });
   const onUpLoadImgToServer = async () => {
     dispatch(updateIsLoading(true));
 

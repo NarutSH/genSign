@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { GrClearOption } from "react-icons/gr";
+import { BsEyeFill } from "react-icons/bs";
 
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -11,6 +12,7 @@ import _ from "lodash";
 import uniqid from "uniqid";
 import resizebase64 from "resize-base64";
 import { random_rgba } from "../services/func";
+import ModalPreviewPage from "./ModalPreviewPage";
 
 const InputElement = () => {
   const [imageUpload, setImageUpload] = useState([]);
@@ -19,6 +21,9 @@ const InputElement = () => {
   const rawImages = useSelector((state) => state.dataReducer.rawImages);
   const signPosition = useSelector((state) => state.dataReducer.signPosition);
   const [testImg, setTestImage] = useState(null);
+  const [pagePreview, setPagePreview] = useState(null);
+  const [modalPreviewIsOpen, setModalPreviewIsOpen] = useState(false);
+
   const getSignatures = useSelector(
     (state) => state.signatureReducer.signatures
   );
@@ -63,6 +68,11 @@ const InputElement = () => {
     });
 
     dispatch(updateRawImages(newRawData));
+  };
+
+  const onPreviewPage = (page) => {
+    setPagePreview(page);
+    setModalPreviewIsOpen(true);
   };
 
   const onSelectAllPage = () => {
@@ -156,7 +166,7 @@ const InputElement = () => {
               {+page.status !== -1 ? (
                 <div
                   className="position-absolute top-0 end-0"
-                  style={{ zIndex: "99" }}
+                  style={{ zIndex: "5" }}
                 >
                   <span
                     className="badge m-1"
@@ -171,11 +181,24 @@ const InputElement = () => {
               {+page.status !== -1 ? (
                 <div
                   className="position-absolute bottom-0 end-0 "
-                  style={{ zIndex: "99" }}
+                  style={{ zIndex: "5" }}
                   onClick={() => onClearImageStatus(page)}
                 >
                   <span className="badge bg-light m-1">
                     <GrClearOption size="1.2rem" />
+                  </span>
+                </div>
+              ) : (
+                ""
+              )}
+              {+page.status !== -1 ? (
+                <div
+                  className="position-absolute bottom-0 start-0 "
+                  style={{ zIndex: "5" }}
+                  onClick={() => onPreviewPage(page)}
+                >
+                  <span className="badge  m-1">
+                    <BsEyeFill size="1.2rem" color="#000000" />
                   </span>
                 </div>
               ) : (
@@ -191,6 +214,7 @@ const InputElement = () => {
                 alt="ref"
                 style={imgStyle(page)}
                 className="m-auto"
+                onMouseEnter={() => console.log(page)}
               />
             </div>
           );
@@ -214,6 +238,11 @@ const InputElement = () => {
       ) : (
         ""
       )}
+      <ModalPreviewPage
+        page={pagePreview}
+        modalPreviewIsOpen={modalPreviewIsOpen}
+        setModalPreviewIsOpen={setModalPreviewIsOpen}
+      />
     </div>
   );
 };

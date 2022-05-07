@@ -26,6 +26,7 @@ import {
   fetchToFile,
   getImageDimensions,
   random_rgba,
+  readFileData,
 } from "../services/func";
 
 const ToastImgEditor = () => {
@@ -96,6 +97,7 @@ const ToastImgEditor = () => {
     });
 
     const listSign = {
+      signTemplate64: dataUrl,
       signTempFile,
       signTemplateId,
     };
